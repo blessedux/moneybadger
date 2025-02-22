@@ -18,25 +18,17 @@ export function BitcoinConnectClientWrapper({ onConnect }: BitcoinConnectClientW
   const [isConnecting, setIsConnecting] = useState(false);
 
   const handleSuccess = async (provider: WebLNProvider) => {
-    console.log('Wallet connected successfully');
+    console.log('Wallet connected successfully in wrapper');
     setIsConnecting(false);
     if (onConnect) {
       onConnect();
     }
   };
 
-  const handleClick = () => {
-    setIsConnecting(true);
-  };
-
   return (
     <Button 
       onSuccess={handleSuccess}
-      onClick={handleClick}
-      className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-6 rounded-full text-lg disabled:opacity-50"
-      disabled={isConnecting}
-    >
-      {isConnecting ? 'Connecting...' : 'Connect Wallet'}
-    </Button>
+      className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-6 rounded-full text-lg"
+    />
   );
 }
