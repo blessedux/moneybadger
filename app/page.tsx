@@ -1,57 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ParentDashboard } from './components/dashboard/parent-dashboard';
-import { ChildDashboard } from './components/dashboard/child-dashboard';
-import { fetchTasks, fetchChildren, updateTaskStatus } from './lib/api';
-import { Task, Child } from './types';
-import Image from 'next/image'
-import {BitcoinConnectClientWrapper} from './components/bitcoinConnectClientWrapper';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { BitcoinConnectClientWrapper } from './components/bitcoinConnectClientWrapper';
 
 export default function Home() {
+  const router = useRouter();
   const [isWalletConnected, setIsWalletConnected] = useState(false);
-  const [userType, setUserType] = useState<'mother' | 'father' | 'child' | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [children, setChildren] = useState<Child[]>([]);
-  const [balance, setBalance] = useState(0);
-  const [loading, setLoading] = useState(false);
 
   const handleWalletConnect = () => {
-    console.log('Wallet connected');
     setIsWalletConnected(true);
   };
 
-  // Simplified character selection handler
-  const handleCharacterSelect = async (type: 'father' | 'mother') => {
-    console.log('Character clicked:', type);
+  const handleCharacterSelect = (type: 'father' | 'mother') => {
+    if (!isWalletConnected) return;
     
-    if (!isWalletConnected) {
-      console.log('Wallet not connected - cannot select character');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      console.log('Setting user type to:', type);
-      setUserType(type);
-      
-      // Load initial data
-      const tasksData = await fetchTasks('parent1');
-      const childrenData = await fetchChildren('parent1');
-      
-      setTasks(tasksData);
-      setChildren(childrenData);
-      setBalance(10000);
-      
-      console.log('Data loaded successfully');
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
-    }
+    console.log('Selected:', type);
+    // Store the selection in localStorage or similar if needed
+    localStorage.setItem('userType', type);
+    // Route to the next page (parent dashboard)
+    router.push(`/dashboard/${type}`);
   };
 
-  // Simple character button component
   const CharacterButton = ({ type, image, title, bgColor }: {
     type: 'father' | 'mother',
     image: string,
@@ -61,14 +32,19 @@ export default function Home() {
     <button 
       onClick={() => handleCharacterSelect(type)}
       className={`
-        w-48 flex flex-col items-center relative 
-        ${isWalletConnected ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}
+        group relative w-full
+        ${isWalletConnected 
+          ? 'cursor-pointer hover:scale-105' 
+          : 'opacity-50 cursor-not-allowed'
+        }
+        transition-all duration-200
       `}
+      disabled={!isWalletConnected}
     >
       <div className={`
-        ${bgColor} rounded-full p-4 w-32 h-32 
-        flex items-center justify-center border-4 border-black
-        ${isWalletConnected && 'hover:scale-105 transition-transform'}
+        ${bgColor} rounded-full p-4 w-32 h-32 mx-auto
+        border-4 border-black transition-all duration-200
+        ${isWalletConnected ? `group-hover:${bgColor.replace('bg-', 'bg-')}-700` : ''}
       `}>
         <Image
           src={image}
@@ -76,39 +52,24 @@ export default function Home() {
           height={100}
           alt={title}
           className="rounded-full"
+          priority
         />
       </div>
-      <span className="bg-black text-white px-4 py-1 rounded-full absolute -bottom-2 z-10">
+      <span className="bg-black text-white px-4 py-1 rounded-full 
+        absolute left-1/2 -translate-x-1/2 -bottom-2">
         {title}
       </span>
     </button>
   );
 
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
-      </div>
-    );
-  }
-
-  // Show dashboard if user type is selected
-  if (userType) {
-    return (
-      <ParentDashboard
-        tasks={tasks}
-        children={children}
-        balance={balance}
-        onRefresh={loadData}
-        onTaskComplete={handleTaskApproved}
-      />
-    );
-  }
-
-  // Main selection screen
   return (
-    <div className="min-h-screen w-full flex flex-col items-center p-4">
+    <div className="min-h-screen w-full flex flex-col items-center p-4"
+      style={{
+        backgroundImage: 'url(/background2.svg)',
+        backgroundSize: '20px 20px',
+        backgroundRepeat: 'repeat',
+      }}
+    >
       <div className="w-full max-w-md flex flex-col items-center gap-8">
         {/* Logo */}
         <div className="flex flex-col items-center">
@@ -135,8 +96,8 @@ export default function Home() {
           )}
         </div>
 
-        {/* Character Selection */}
-        <div className="flex flex-col items-center gap-6 w-full mt-4">
+        {/* Character Buttons */}
+        <div className="flex flex-col gap-6 w-full">
           <CharacterButton
             type="father"
             image="/bicho1.jpg"
